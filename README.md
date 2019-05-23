@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/flux-framework/flux-sched.svg?branch=master)](https://travis-ci.org/flux-framework/flux-sched)
-[![Coverage Status](https://coveralls.io/repos/flux-framework/flux-sched/badge.svg?branch=master&service=github)](https://coveralls.io/github/flux-framework/flux-sched?branch=master)
+[![Build Status](https://travis-ci.org/flux-framework/flux-sched-v0.7.svg?branch=master)](https://travis-ci.org/flux-framework/flux-sched-v0.7)
+[![Coverage Status](https://coveralls.io/repos/flux-framework/flux-sched-v0.7/badge.svg?branch=master&service=github)](https://coveralls.io/github/flux-framework/flux-sched-v0.7?branch=master)
 
 *NOTE: The interfaces of flux-sched are being actively developed and
 are not yet stable.* The github issue tracker is the primary way to

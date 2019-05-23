@@ -39,8 +39,10 @@ env:
   global:
   - TAP_DRIVER_QUIET=1
   - DOCKERREPO=fluxrm/flux-sched
+  - DOCKER_STABLE_BRANCH=v0.7
   - DOCKER_USERNAME=travisflux
-  - secure: "r/VnyLaR1NPcErRnfktopohrMPo8GSJokJiQwDr2XDrglPiL4T7Qppu42ihdvtWd3U3ZYFYLImeqipZqqz7+rhWxvao6k+NTAyQWkrsAmfC8B2czUR52ozcDF3jV2C4EJth/xlzsx54Gy7YNUEITfnUbnHCZ+/FmXXjuAyEPJ3c="
+  # echo DOCKER_PASSWORD=xxx | travis encrypt -r flux-framework/flux-sched-v0.7
+  - secure: "l3o8dDIkYDGV8IU0MXlI768KnaOrWspwg7CU/beTzJluqFB1O7fhtZwbXBTIA/f3Be6Eet28hIRjHno2wjgRFFqeRNb/JsrdM1hM66vYC/trdO7Fuyq5xgKgXyd906WgS4n+IeIEX+XMwbbG0a2teo9OPATG/UKBeeKxNSbhUJItbzgoDRsGmJLWpMQVlR1QdkMceBXfHzkjo6ivpuRQ79Znwz02RVtSi75dgBdFl70TDHH5/qZcTNckkQZrOwjphYmc0wf2dq99ElzGxt9LdOUxBBN6TTZB+7j4HUIVZxIG0mrfZ55JeN2uxnvyjuxAZt0N+LUUBII0KGtw7G+x5scLJxxD9oTDSV6ppuOAKcxvHO2y4inIqLnJN727rxMa4j7131qqjRyCdT3jMVghY5D7gvExO9DjKSkkHoIUTEMKqnbfai9PQJ85qKyxjm4JrXau/bN3hZlZ6c7QylCHCW17YiTshaXBuJYvVWPr3xC77JKu0/7ClNZb+YdIwN7DgvtgrPDBvi3fZwSdAT7zBrFH+BPADmRu2KRk1/7qAjPb9RPyqW5me1cGLadMF8VaPHceI/EK2VruGCJXEem/OHyE35P+GtjBJF/ecYguDC/yI9TZ81ZnZ2jjTiX/9udFus8/cZjG3GSpYR+Vh/CkglrCxDJePcFVs3ZNdpSP8/A="
 
 cache:
   directories:
@@ -53,10 +55,15 @@ before_install:
   #  Tag image if this build is on master or result of a tag:
   - |
    if test "$DOCKER_TAG" = "t" \
-     -a "$TRAVIS_REPO_SLUG" = "flux-framework/flux-sched" \
-     -a "$TRAVIS_PULL_REQUEST" = "false" \
-     -a \( "$TRAVIS_BRANCH" = "master" -o -n "$TRAVIS_TAG" \); then
-      export TAGNAME="${DOCKERREPO}:${IMG}${TRAVIS_TAG:+-${TRAVIS_TAG}}"
+     -a "$TRAVIS_REPO_SLUG" = "flux-framework/flux-sched-v0.7" \
+     -a "$TRAVIS_PULL_REQUEST" = "false"; then
+      if test -n "$TRAVIS_TAG"; then
+          # Normal tag: use tag as suffix:
+          export TAGNAME="${DOCKERREPO}:${IMG}-${TRAVIS_TAG}"
+      elif test "$TRAVIS_BRANCH" = "master"; then
+          # Builds on master get tagged with "stable branch" suffix:
+          export TAGNAME="${DOCKERREPO}:{$IMG}${DOCKER_STABLE_BRANCH:+-$DOCKER_STABLE_BRANCH}"
+      fi
       echo "Tagging new image $TAGNAME"
    fi
 
@@ -75,10 +82,13 @@ after_success:
   if test -n "$TAGNAME"; then
      echo "$DOCKER_PASSWORD" | \
        docker login -u "$DOCKER_USERNAME" --password-stdin && \
+     echo "docker push ${TAGNAME}"
      docker push ${TAGNAME}
      # If this is the bionic build, then also tag without image name:
+     # Either use TRAVIS_TAG if set, or DOCKER_STABLE_BRANCH if set, or "latest"
      if echo "$TAGNAME" | grep -q "bionic"; then
-       t="${DOCKERREPO}:${TRAVIS_TAG:-latest}"
+       t="${DOCKERREPO}:${TRAVIS_TAG:-${DOCKER_STABLE_BRANCH:-latest}}"
+       echo "docker push ${t}"
        docker tag "$TAGNAME" ${t} && \
        docker push ${t}
      fi
@@ -105,12 +115,14 @@ deploy:
   prerelease: true
   body: "View [Release Notes](${TAG_URI}/NEWS.md#${ANCHOR}) for flux-sched ${TRAVIS_TAG}."
   api_key:
-    secure: h+xiQ6lg0SNrHor+cwSKFCUBDk51maSQILAhLYZXWB8LvAib7TQ17ZCUiwYZ8Pwt6aacrqshWuYapbm7PzTv2kfQqtuVgPh0ILphXGXyokhv1PpIlz3bePKfa/cNwPr1GAHtAxqsZndqvRMKeAmkfH00iezGzK72xwhslnbqVfE=
+    # Generate personal access token at github.com/settings/token, encrypt with
+    # cat <secure token> | travis encrypt -r <repo_slug>
+    secure: "MXbnDeXX+nDuQWZcp7qm/S3RDw501P7j21mOq9g7x6vWL5yX9EPIfi+ZGm0DENZAn7j74Wz/bgd4Bi7BkKlcYDPuFjIkTFsyg6jS8RukZzEsy1D6rFbwuQWGMvIq1BYsjyP1NfYHoe6QwrQYegqWGduzbTTBoC7q69jxukLofPO9c6C/mXfAPCoqpsnNqqk81eL3xA3+BXgLHm1D6uY0udbYoiSEYneDAKVejvMizGikWeJTzB9GU+vPQth3utbClxR/7i6mp3JQV2JrwB/GjoT/1oXxHxMzUvxyJxTqZpeqpmsTphe/uTwto0mUoFD3seOyRuFqIM+uyB7P6q69d37gyqpdiXLNY+cWs0vdNu1/9AH360j7qkD5wglaaZlc7O9Ids86h7Mkdj9e1kg0S59s4rfz+8Zp91HEbpm55LWoWRm7gjS9ivf9bSFyFxEeNiTwtwIm8hdxOBDhdp+sgAqdEWD+dY1ycvVlgOxxFhpvbMwFm4YLF1cSpcLN+tYWMM3et28vCmkF80bn8IiZwb9+bVOhkpMf93cMqZQ2HNHCUv/DEr/a8ectXGY896RX21RfMDSWwOMvdT9o16o5D7MwhW7PREccLHYW4H7QvQN7MrOvr//71M2azOaLXwDf1cfa5cm6StHEjH0lmxiZ/xzDnZf4Rs3UrrNGgPuIpkY="
   on:
     # Only deploy if GITHUB_RELEASES_DEPLOY is set
     condition: $GITHUB_RELEASES_DEPLOY = "t"
     tags: true
-    repo: flux-framework/flux-sched
+    repo: flux-framework/flux-sched-v0.7
 
 notifications:
   email:
