@@ -62,7 +62,7 @@ before_install:
           export TAGNAME="${DOCKERREPO}:${IMG}-${TRAVIS_TAG}"
       elif test "$TRAVIS_BRANCH" = "master"; then
           # Builds on master get tagged with "stable branch" suffix:
-          export TAGNAME="${DOCKERREPO}:{$IMG}${DOCKER_STABLE_BRANCH:+-$DOCKER_STABLE_BRANCH}"
+          export TAGNAME="${DOCKERREPO}:${IMG}${DOCKER_STABLE_BRANCH:+-$DOCKER_STABLE_BRANCH}"
       fi
       echo "Tagging new image $TAGNAME"
    fi
