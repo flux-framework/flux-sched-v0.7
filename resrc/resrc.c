@@ -951,8 +951,14 @@ static resrc_t *resrc_new_from_hwloc_obj (resrc_api_ctx_t *ctx, hwloc_obj_t obj,
          */
         if (strncmp(obj->name, "cuda", 4) == 0)
             id = atoi (obj->name + 4);
-        else if (strncmp(obj->name, "opencl", 6) == 0)
-            id = atoi (obj->name + 6);
+        else if (strncmp(obj->name, "opencl", 6) == 0) {
+            /* Naming convention of opencl devices for hwloc:
+            * "opencl" followed by a platform ID followed by a device ID.
+            * Then, the letter d delimits platform id and device id.
+            */
+            const char *delim = strchr (obj->name + 6, 'd');
+            id = atoi (delim + 1);
+        }
         type = xstrdup ("gpu");
         name = xasprintf ("%s%"PRId64"", type, id);
     } else {
