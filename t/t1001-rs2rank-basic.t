@@ -35,6 +35,10 @@ excl_4N4B_sierra_gpu=$basepath/004N/exclusive/04-brokers-sierra2
 excl_4N4B_nc_sierra_gpu=44
 excl_4N4B_ng_sierra_gpu=4
 
+excl_4N4B_corona_gpu=$basepath/004N/exclusive/04-brokers-corona
+excl_4N4B_nc_corona_gpu=48
+excl_4N4B_ng_corona_gpu=4
+
 #
 # test_under_flux is under sharness.d/
 #
@@ -132,7 +136,7 @@ test_expect_success 'rs2rank: can handle sierra nodes with group type' '
     verify_1N_nproc_sleep_jobs ${excl_4N4B_nc_sierra}
 '
 
-test_expect_success 'rs2rank: can schedule GPUs using hwloc' '
+test_expect_success 'rs2rank: can schedule GPUs (NVIDIA) using hwloc' '
     adjust_session_info 6 &&
     flux module remove sched &&
     flux hwloc reload ${excl_4N4B_sierra_gpu} &&
@@ -167,6 +171,25 @@ test_expect_success 'rs2rank: can schedule GPUs using matching RDL' '
     state=$(flux kvs get -j $(job_kvs_path 35).state) &&
     test ${state} = "complete" &&
     state=$(flux kvs get -j $(job_kvs_path 39).state) &&
+    test ${state} = "submitted"
+'
+
+test_expect_success 'rs2rank: can schedule GPUs (AMD) using hwloc' '
+    adjust_session_info 6 &&
+    flux module remove sched &&
+    flux hwloc reload ${excl_4N4B_corona_gpu} &&
+    flux module load sched sched-once=true &&
+    timed_wait_job 5 submitted &&
+    flux submit -N 1 -g ${excl_4N4B_ng_corona_gpu} -c 1 sleep 0 &&
+    flux submit -N 1 -c ${excl_4N4B_nc_corona_gpu} sleep 0 &&
+    flux submit -N 1 -g ${excl_4N4B_ng_corona_gpu} -c 1 sleep 0 &&
+    flux submit -N 1 -c ${excl_4N4B_nc_corona_gpu} sleep 0 &&
+    flux submit -N 1 -g ${excl_4N4B_ng_corona_gpu} -c 1 sleep 0 &&
+    flux submit -N 1 -c ${excl_4N4B_nc_corona_gpu} sleep 0 &&
+    timed_sync_wait_job 10 &&
+    state=$(flux kvs get -j $(job_kvs_path 41).state) &&
+    test ${state} = "complete" &&
+    state=$(flux kvs get -j $(job_kvs_path 45).state) &&
     test ${state} = "submitted"
 '
 
