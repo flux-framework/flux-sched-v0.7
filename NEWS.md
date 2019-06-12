@@ -1,3 +1,16 @@
+
+**NOTE:** A new repo has been created to track flux-sched v0.7 stable
+          development. Bug reports against v0.7.x should be opened in
+          the issue tracker for the repository at:
+          https://github.com/flux-framework/flux-sched-v0.7
+
+
+flux-sched version 0.7.1 - 2019-06-12
+-------------------------------------
+
+### Features
+ * resrc: support for AMD GPU devices (backport OpenCL naming fix) (#4)
+
 flux-sched version 0.7.0 - 2019-01-20
 -------------------------------------
 
